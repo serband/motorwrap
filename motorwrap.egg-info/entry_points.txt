@@ -1,0 +1,2 @@
+[console_scripts]
+motorwrap = motorwrap.cli:main
