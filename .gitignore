@@ -14,13 +14,20 @@ dsenv/
 build/
 dist/
 
-# Data files
+# Data files (large / sensitive)
 *.parquet
 *.csv
 *.zip
 
 # Local runs / experiment outputs
 runs/
+optuna_trials.csv
+*.cbm  # CatBoost binary models
+
+# SHAP / plotting outputs
+*.png
+*.pdf
+*.svg
 
 # OS junk
 .DS_Store
