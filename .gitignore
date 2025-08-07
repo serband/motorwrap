@@ -1,0 +1,26 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+env/
+venv/
+dsenv/
+
+# Build outputs
+*.egg-info/
+build/
+dist/
+
+# Data files
+*.parquet
+*.csv
+*.zip
+
+# Local runs / experiment outputs
+runs/
+
+# OS junk
+.DS_Store
