@@ -31,3 +31,5 @@ optuna_trials.csv
 
 # OS junk
 .DS_Store
+context.md
+test_code.py

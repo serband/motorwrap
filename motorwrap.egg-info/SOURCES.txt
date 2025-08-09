@@ -3,11 +3,13 @@ pyproject.toml
 motorwrap/__init__.py
 motorwrap/catboost_poisson.py
 motorwrap/cli.py
+motorwrap/explainability.py
+motorwrap/predict_with_model.py
 motorwrap/schema.py
-motorwrap/score.py
 motorwrap.egg-info/PKG-INFO
 motorwrap.egg-info/SOURCES.txt
 motorwrap.egg-info/dependency_links.txt
 motorwrap.egg-info/entry_points.txt
 motorwrap.egg-info/requires.txt
 motorwrap.egg-info/top_level.txt
+tests/test_fit_peril.py

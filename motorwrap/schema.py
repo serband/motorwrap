@@ -1,7 +1,7 @@
 from __future__ import annotations
-import json
 from typing import Dict, List, Optional, Tuple
 import polars as pl
+import json
 
 SENTINEL_CAT = "__NA__"
 
@@ -54,40 +54,43 @@ def infer_schema(
     return schema
 
 def coerce_like_schema(df: pl.DataFrame, schema: Dict) -> pl.DataFrame:
-    """Coerce df columns to match schema roles & dtypes.
-    - Ensure all features present; add missing with sentinel/0
-    - Cast categoricals to Utf8 and fill nulls with sentinel
-    - Cast numerics to Float64 (safe), fill nulls with 0
-    Columns not in schema are ignored.
-    """
-    feats = schema["features"]
-    roles = schema["roles"]
-    dtypes = schema["dtypes"]
-    sentinel = schema.get("sentinel_cat", "__NA__")
-
-    # Start with only schema features (order preserved)
+    """Coerce df to match schema (column order + types)"""
     out = []
-    for c in feats:
-        if c in df.columns:
-            s = df[c]
-        else:
-            # Create missing column
-            if roles[c] == "categorical":
-                s = pl.Series(name=c, values=[sentinel] * df.height, dtype=pl.Utf8)
+    
+    # Process each feature column according to the schema
+    for name in schema["features"]:
+        if name not in df.columns:
+            # Add missing column with default value
+            out.append(pl.Series(name, [None] * df.height, dtype=pl.Float64))
+            continue
+            
+        s = df[name]
+        
+        # Check if this column should be categorical according to schema
+        if schema["roles"][name] == "categorical":
+            # Ensure categorical columns are strings
+            if s.dtype != pl.Utf8:
+                out.append(s.cast(pl.Utf8))
             else:
-                s = pl.Series(name=c, values=[0.0] * df.height, dtype=pl.Float64)
-
-        if roles[c] == "categorical":
-            s = s.cast(pl.Utf8).fill_null(sentinel)
+                out.append(s)
         else:
-            # Cast numerics to Float64 to be safe for CatBoost
-            # If not numeric, try to coerce
-            try:
-                s = s.cast(pl.Float64)
-            except Exception:
-                s = s.cast(pl.Utf8).str.to_decimal(10, 2).cast(pl.Float64)
-            s = s.fill_null(0.0)
-        out.append(s)
+            # For numeric columns, ensure they are numeric
+            if s.dtype == pl.Categorical or s.dtype == pl.Utf8:
+                # Try to convert string/categorical to numeric
+                try:
+                    # Try direct conversion to float
+                    out.append(s.cast(pl.Float64))
+                except:
+                    # If that fails, fill with None
+                    out.append(pl.Series(name, [None] * df.height, dtype=pl.Float64))
+            else:
+                # Convert to appropriate numeric type
+                try:
+                    out.append(s.cast(pl.Float64))
+                except:
+                    # If conversion fails, fill with None
+                    out.append(pl.Series(name, [None] * df.height, dtype=pl.Float64))
+    
     return pl.DataFrame(out)
 
 def save_schema(schema: Dict, path: str) -> None:

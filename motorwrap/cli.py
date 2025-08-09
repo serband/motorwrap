@@ -3,9 +3,12 @@ import os, json
 import polars as pl
 import typer
 from typing import Optional, List
+from pathlib import Path
 
 from .catboost_poisson import fit_peril as _fit_peril
 from .score import score_peril as _score_peril
+from .predict_with_model import predict_with_model
+from .explainability import explain_model_with_shap
 
 app = typer.Typer(add_completion=False)
 
@@ -64,6 +67,63 @@ def score_peril(
     else:
         raise typer.BadParameter("Only parquet or csv supported.")
     typer.echo(f"Saved: {output_path}")
+
+@app.command()
+def fit(
+    data_path: Path,
+    target_col: str,
+    model_dir: Path,
+    weight_col: Optional[str] = None,
+    train_test_col: Optional[str] = None,
+    valid_size: float = 0.2,
+    n_trials: int = 40,
+):
+    """Fit a Poisson CatBoost model."""
+    df = pl.read_csv(data_path)
+    _fit_peril(
+        df=df,
+        target_col=target_col,
+        weight_col=weight_col,
+        train_test_col=train_test_col,
+        model_dir=str(model_dir),
+        valid_size=valid_size,
+        n_trials=n_trials,
+    )
+    print(f"Model saved to {model_dir}")
+
+@app.command()
+def predict(
+    data_path: Path,
+    model_dir: Path,
+    output_path: Path,
+    prediction_col: str = "prediction",
+):
+    """Generate predictions using a trained model."""
+    df = pl.read_csv(data_path)
+    df_with_predictions = predict_with_model(
+        df=df,
+        model_path=str(model_dir),
+        prediction_col=prediction_col,
+    )
+    df_with_predictions.write_csv(output_path)
+    print(f"Predictions saved to {output_path}")
+
+@app.command()
+def explain(
+    model_dir: Path,
+    data_path: Path,
+    output_dir: Path,
+    sample_rows: Optional[int] = None,
+):
+    """Generate SHAP explanations for a trained model."""
+    df = pl.read_csv(data_path)
+    explain_model_with_shap(
+        model_path=str(model_dir),
+        df=df,
+        output_path=str(output_dir),
+        sample_rows=sample_rows,
+    )
+    print(f"SHAP explanations saved to {output_dir}")
 
 def main():
     app()
