@@ -13,6 +13,7 @@ dsenv/
 *.egg-info/
 build/
 dist/
+catboost_info/
 
 # Data files (large / sensitive)
 *.parquet
@@ -33,3 +34,4 @@ optuna_trials.csv
 .DS_Store
 context.md
 test_code.py
+.vscode/settings.json
